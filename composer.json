@@ -1,7 +1,6 @@
 {
   "name": "dkhorev/laravel-ampq",
   "description": "Pub/Sub with RabbitMQ in Laravel.",
-  "version": "1.0.2",
   "type": "module",
   "license": "MIT",
   "authors": [
