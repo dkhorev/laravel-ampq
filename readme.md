@@ -2,9 +2,13 @@
 
 Pub/Sub with RabbitMQ in Laravel.
 
+### Installation
+
+`composer require dkhorev/laravel-ampq`
+
 ### Publish configs
 
-php artisan vendor:publish --tag=laravel-ampq --force
+`php artisan vendor:publish --tag=laravel-ampq --force`
 
 ### Listeners
 

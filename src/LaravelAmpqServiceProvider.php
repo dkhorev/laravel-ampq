@@ -21,7 +21,7 @@ class LaravelAmpqServiceProvider extends ServiceProvider
 
         $this->publishes(
             [
-                __DIR__ . '/laravel-ampq.php' => config_path('laravel-amp.php'),
+                __DIR__ . '/laravel-ampq.php' => config_path('laravel-ampq.php'),
             ],
             'laravel-ampq'
         );
