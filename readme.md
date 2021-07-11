@@ -12,7 +12,7 @@ Pub/Sub with RabbitMQ in Laravel.
 
 ### Listeners
 
-setup our listeners in `laravel-ampq.cfg`
+setup your listeners in `laravel-ampq.cfg`
 
 ```
 'callbacks' => [
@@ -28,7 +28,20 @@ this will listen for message on "exchange:topic" and pass any messages to `Examp
 
 every listener should implement `AmpqListenCallbackContract` (__invoke() method)
 
-it is recommended to only do basic validation of messages in a callback, and queue any heavy processing jobs
+```php
+use dkhorev\LaravelAmpq\Contracts\AmpqListenCallbackContract;
+use PhpAmqpLib\Message\AMQPMessage;
+
+class MyTopicCallback implements AmpqListenCallbackContract
+{
+    public function __invoke(AMQPMessage $msg): void
+    {
+        // TODO: Implement __invoke() method.
+    }
+}
+```
+
+it is recommended to only do basic validation of messages in a callback, and queue any heavy processing jobs (to redis or whatever)
 
 ### Listen command
 
@@ -38,47 +51,64 @@ it is recommended to only do basic validation of messages in a callback, and que
 
 `listenStack` - stack of listening channels from config's `callbacks` array`
 
-### Making client connections to send messages
+### Sending messages
+
+To send a message with this package, you can use any connection from `laravel-ampq.cfg`
+
+#### Using "local" connection (example)
+
+```php
+use dkhorev\LaravelAmpq\Clients\AmpqClient;
+use dkhorev\LaravelAmpq\Contracts\SendToTopicServiceContract;
+
+$config = config('laravel-ampq.servers.local');
+
+$client =  new AmpqClient($config['host'], $config['user'], $config['password'], (int)$config['port']);
+$sender = resolve(SendToTopicServiceContract::class);
+$sender->postTo($client, 'some-exchange', 'some-topic', ['exapmple-data' => 'hello world!']);
+```
+
+#### Creating custom client connections
 
 add custom server to config
 
 ```
 'servers' => [
     'custom' => [
-        ...
+    ...
     ],
 ],
 ```
 
-extend `AmpqClient` from this package and create an interface
-```
+extend `AmpqClient` from this package and create an interface, i.e. `AmpqClientCustomInterface`
+
+```php
 use dkhorev\LaravelAmpq\Clients\AmpqClient;
 
-class AmpqClientCustom extends AmpqClient implements AmpqClientCustomContract
+class AmpqClientCustom extends AmpqClient implements AmpqClientCustomInterface
 {}
 ```
 
-then bind new interface `AmpqClientCustomContract` to resolve with custom server
+in your app's `AppServiceProvider` bind new interface `AmpqClientCustomInterface` to resolve with custom server
 
-```
+```php
 $this->app->bind(
-    AmpqClientCustomContract::class,
+    AmpqClientCustomInterface::class,
     static function () {
         $config = config('laravel-ampq.servers.custom');
 
-        return new AmpqClientLocal($config['host'], $config['user'], $config['password'], $config['port']);
+        return new AmpqClientCustom($config['host'], $config['user'], $config['password'], $config['port']);
     }
 );
 ```
 
-typehint `AmpqClientLocalContract` in your service to get this ampq connection
+### Sending messages
 
-### Send message to topic
-to send message
-```
-$sender = app(SendToTopicServiceContract::class);
-``` 
+```php
+use dkhorev\LaravelAmpq\Contracts\SendToTopicServiceContract;
 
+$sender = resolve(SendToTopicServiceContract::class);
+$client = resolve(AmpqClientCustomInterface::class);
+
+$sender->postTo($client, 'some-exchange', 'some-topic', ['exapmple-data' => 'hello world!']);
 ```
-$sender->postTo(_AmpqClientContract_ $client, string $exchange, string $topic, array $data);
-``
