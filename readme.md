@@ -1,4 +1,4 @@
-# Laravel AMPQ helper
+# Laravel RabbitMQ helper
 
 Pub/Sub with RabbitMQ in Laravel.
 
